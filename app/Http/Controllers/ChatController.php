@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use OpenAI;
+use OpenAI\Client;
 use App\Models\Chat;
 use App\Models\Message;
 use Illuminate\Http\Request;
-use OpenAI;
-use OpenAI\Client;
 use Illuminate\Support\Facades\Log;
 
 class ChatController extends Controller
 {
     public function index()
     {
-        return Chat::all();
+        return Chat::with('messages')->get();
     }
 
     public function store()
     {
-        $chat = Chat::create();
+        $chat = Chat::create(['title' => 'New Chat']);
         return response()->json($chat);
     }
 
@@ -47,14 +47,14 @@ class ChatController extends Controller
         $response = $this->getOpenAIResponse($request->content);
         
         // Save assistant message
-        $chat->messages()->create([
+        $assistantMessage = $chat->messages()->create([
             'content' => $response,
             'role' => 'assistant'
         ]);
 
         return response()->json([
             'user_message' => $message,
-            'assistant_response' => $response
+            'assistant_response' => $assistantMessage
         ]);
     }
 
@@ -83,16 +83,16 @@ class ChatController extends Controller
     }
 
     private function createOpenAIClient(): Client
-{
+    {
     $token = env('GITHUB_TOKEN');
     
     if (empty($token)) {
         throw new \RuntimeException('GitHub token not configured in .env file');
     }
 
-    return OpenAI::factory()
-        ->withBaseUri('https://models.inference.ai.azure.com')
-        ->withHttpHeader('api-key', $token)
-        ->make();
-}
+        return OpenAI::factory()
+            ->withBaseUri('https://models.inference.ai.azure.com')
+            ->withHttpHeader('api-key', $token)
+            ->make();
+    }
 }

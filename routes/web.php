@@ -1,10 +1,14 @@
 <?php
 
+use App\Models\Chat;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChatController;
 
 Route::get('/', function () {
-    return view('home');
+    return view('home', [
+        'chats' => Chat::all(),
+        'activeChat' => Chat::latest()->first()
+    ]);
 });
 
 Route::prefix('chats')->group(function () {
